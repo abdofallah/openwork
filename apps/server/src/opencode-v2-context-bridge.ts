@@ -6,7 +6,7 @@ import { openworkReadTransport, type OpenworkReadTransport } from "./opencode-pl
 import { createV2ReadAdapter, readV2SessionActivity } from "./opencode-v2-read-adapter.js";
 import { isRecord } from "./workspace-kv-store.js";
 import { createV2BrowserBridge } from "./opencode-v2-browser-bridge.js";
-import { OPENWORK_CLOUD_UPLOADS_EXTENSION_ID } from "./extensions/cloud-uploads.js";
+import { OPENWORK_CLOUD_UPLOADS_EXTENSION_ID } from "./extensions/cloud-upload-constants.js";
 import { SESSION_GROUP_COMMAND_IDS } from "./opencode-plugins/openwork-session-groups.js";
 
 const requestSchema = z.object({
