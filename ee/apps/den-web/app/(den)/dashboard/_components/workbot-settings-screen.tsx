@@ -6,7 +6,9 @@ import { useEffect, useId, useState } from "react";
 import { WORKBOT_DEFAULT_MODEL_NAME, type WorkbotModelTest, type WorkbotSettings } from "@openwork/types/den/workbot-settings";
 import {
   getBrandAppearanceRoute,
+  getMcpConnectionsRoute,
   getOrgAccessFlags,
+  orgFeatureEnabled,
   parseOrganizationMetadata,
   permissionLockReason,
 } from "../../_lib/den-org";
@@ -20,6 +22,7 @@ import { DenSkeleton } from "../../_components/ui/skeleton";
 import { useOrgDashboard } from "../_providers/org-dashboard-provider";
 import { providerIconSlug } from "./library-models";
 import { useSaveWorkbotModel, useTestWorkbotDefaultModel, useWorkbotSettings } from "./workbot-settings-data";
+import { WorkbotProactiveSection } from "./workbot-proactive-section";
 
 /** The name Workbot introduces itself with: the organization's brand name, unless it is unset or OpenWork. */
 function workbotName(metadata: string | null): string {
@@ -137,6 +140,8 @@ export function WorkbotSettingsScreen() {
   }, [orgId, current, draft, resetTest]);
 
   const name = workbotName(orgContext?.organization.metadata ?? null);
+  // Heads-ups ride on Workbot: shown only with the rollout on and Workbot deployed here.
+  const proactive = orgFeatureEnabled(orgContext, "workbotProactive") && orgContext?.capabilities.workbot === true;
   const savedModel = settings?.model ?? null;
   const changed = draft !== (current ?? "");
   const canChoose = canManage && settings?.runnerReachable === true && !save.isPending && !modelTest.isPending;
@@ -283,6 +288,9 @@ export function WorkbotSettingsScreen() {
                 Undo
               </DenButton>
             </div>
+          ) : null}
+          {proactive && orgId ? (
+            <WorkbotProactiveSection orgId={orgId} canManage={canManage} connectorsHref={getMcpConnectionsRoute(orgSlug)} name={name} />
           ) : null}
           {!canManage && settings ? (
             <p className="flex items-center gap-2 px-1 text-[13px] text-gray-500">
