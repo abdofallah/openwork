@@ -303,6 +303,14 @@
       "development": "./src/den/workbot-settings.ts",
       "default": "./src/den/workbot-settings.ts"
     },
+    "./den/workbot-proactive": {
+      "types": {
+        "openwork-build": "./dist/types/src/den/workbot-proactive.d.ts",
+        "default": "./src/den/workbot-proactive.ts"
+      },
+      "development": "./src/den/workbot-proactive.ts",
+      "default": "./src/den/workbot-proactive.ts"
+    },
     "./den/default-model": {
       "types": {
         "openwork-build": "./dist/types/src/den/default-model.d.ts",
