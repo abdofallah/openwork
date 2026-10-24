@@ -23,8 +23,6 @@ import { PROACTIVE_PREVIEW_KINDS, WorkbotProactivePreview, type ProactivePreview
  * attention. One switch for the organization, which heads-ups are on, when and how often, and a preview.
  */
 
-const SELECT_CLASS = "h-9 text-[13px]";
-
 function hourLabel(hour: number) {
   const h = hour % 24;
   return `${h % 12 === 0 ? 12 : h % 12} ${h < 12 ? "AM" : "PM"}`;
@@ -37,7 +35,7 @@ function leadLabel(minutes: number) {
 function Row({ label, labelId, note, children, testId }: { label: string; labelId?: string; note?: React.ReactNode; children: React.ReactNode; testId?: string }) {
   return (
     <div className="px-6 py-3" data-testid={testId}>
-      <div className="flex min-h-9 flex-wrap items-center justify-between gap-3">
+      <div className="flex min-h-[42px] flex-wrap items-center justify-between gap-3">
         <span id={labelId} className="text-[13px] font-medium text-gray-900">{label}</span>
         <div className="flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2">{children}</div>
       </div>
@@ -104,7 +102,7 @@ export function WorkbotProactivePanel({
         <div className="w-44">
           <DenSelect
             aria-labelledby={ids.meetings}
-            className={SELECT_CLASS}
+           
             menuWidth="trigger"
             value={settings.meetingPrep && runnerReady ? String(settings.leadMinutes) : "off"}
             disabled={locked || !runnerReady}
@@ -130,15 +128,15 @@ export function WorkbotProactivePanel({
       </Row>
 
       <Row label="Working hours" labelId={ids.days} testId="workbot-proactive-hours">
-        <div className="w-32">
-          <DenSelect aria-label="Working days" className={SELECT_CLASS} menuWidth="trigger" value={settings.workingDays} disabled={locked}
+        <div className="w-36">
+          <DenSelect aria-label="Working days" menuWidth="trigger" value={settings.workingDays} disabled={locked}
             onChange={(event) => onChange({ workingDays: event.target.value === "everyday" ? "everyday" : "weekdays" })}>
             <option value="weekdays">Weekdays</option>
             <option value="everyday">Every day</option>
           </DenSelect>
         </div>
-        <div className="w-24">
-          <DenSelect aria-label="Start of the workday" className={SELECT_CLASS} menuWidth="trigger" value={String(settings.startHour)} disabled={locked}
+        <div className="w-28">
+          <DenSelect aria-label="Start of the workday" menuWidth="trigger" value={String(settings.startHour)} disabled={locked}
             onChange={(event) => onChange({ startHour: Number(event.target.value) })}>
             {Array.from({ length: 24 }, (_, hour) => (
               <option key={hour} value={String(hour)} disabled={hour >= settings.endHour}>{hourLabel(hour)}</option>
@@ -146,8 +144,8 @@ export function WorkbotProactivePanel({
           </DenSelect>
         </div>
         <span className="text-[13px] text-gray-500">to</span>
-        <div className="w-24">
-          <DenSelect aria-label="End of the workday" className={SELECT_CLASS} menuWidth="trigger" value={String(settings.endHour)} disabled={locked}
+        <div className="w-28">
+          <DenSelect aria-label="End of the workday" menuWidth="trigger" value={String(settings.endHour)} disabled={locked}
             onChange={(event) => onChange({ endHour: Number(event.target.value) })}>
             {Array.from({ length: 24 }, (_, index) => index + 1).map((hour) => (
               <option key={hour} value={String(hour)} disabled={hour <= settings.startHour}>{hourLabel(hour)}</option>
@@ -158,7 +156,7 @@ export function WorkbotProactivePanel({
 
       <Row label="Daily limit" labelId={ids.cap} testId="workbot-proactive-cap">
         <div className="w-36">
-          <DenSelect aria-labelledby={ids.cap} className={SELECT_CLASS} menuWidth="trigger" value={String(settings.dailyCap)} disabled={locked}
+          <DenSelect aria-labelledby={ids.cap} menuWidth="trigger" value={String(settings.dailyCap)} disabled={locked}
             onChange={(event) => {
               const cap = WORKBOT_PROACTIVE_DAILY_CAPS.find((value) => String(value) === event.target.value);
               if (cap) onChange({ dailyCap: cap });
@@ -172,7 +170,7 @@ export function WorkbotProactivePanel({
 
       <Row label="Members start" labelId={ids.members} testId="workbot-proactive-members">
         <div className="w-36">
-          <DenSelect aria-labelledby={ids.members} className={SELECT_CLASS} menuWidth="trigger" value={settings.membersStart} disabled={locked}
+          <DenSelect aria-labelledby={ids.members} menuWidth="trigger" value={settings.membersStart} disabled={locked}
             onChange={(event) => onChange({ membersStart: event.target.value === "opted_out" ? "opted_out" : "opted_in" })}>
             <option value="opted_in">Opted in</option>
             <option value="opted_out">Must opt in</option>
@@ -199,9 +197,9 @@ function PanelSkeleton() {
   return (
     <div className="divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-100 bg-white" data-testid="workbot-proactive-skeleton">
       {["w-36", "w-48", "w-28", "w-28", "w-32", "w-24", "w-28"].map((width, index) => (
-        <div key={index} className="flex min-h-[61px] items-center justify-between gap-3 px-6 py-3">
+        <div key={index} className="flex min-h-[66px] items-center justify-between gap-3 px-6 py-3">
           <DenSkeleton className={`h-4 ${width}`} />
-          <DenSkeleton className="h-9 w-36" />
+          <DenSkeleton className="h-[42px] w-36" />
         </div>
       ))}
     </div>

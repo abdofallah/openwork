@@ -123,6 +123,26 @@ The Slack app must be installed with interactivity, and the member must have con
 Workspace. `pnpm --filter @openwork/automations test` and `pnpm --filter @openwork-ee/den-api test` cover the
 detection, policy, parsing, message composition and controls without Slack or Google.
 
+## Screenshots
+
+Manage › Workbot › Proactive, on (real Den, `preview-den` world):
+
 ![Proactive settings in Manage › Workbot](./admin-proactive.png)
 
-![A meeting-prep heads-up in Slack](./sample-dm.png)
+Without the Slack app, the switch is locked with the reason and where to fix it:
+
+![Proactive settings without the Slack app](./admin-proactive-slack-missing.png)
+
+The preview follows each kind:
+
+![Morning brief preview](./admin-preview-brief.png)
+
+In Slack: a calendar change after **Snooze until tomorrow** (buttons replaced by what happened and Undo), and a
+meeting-prep heads-up. Rendered from the exact Block Kit payload Den's composer builds, with fictional data; not a
+screenshot of a live Slack workspace:
+
+![Heads-ups in a Slack DM](./sample-dm.png)
+
+The Home tab's Heads-ups section, which answers "what will you notify me about?":
+
+![Heads-ups in the Slack Home tab](./slack-home.png)
