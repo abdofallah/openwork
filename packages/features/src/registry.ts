@@ -199,6 +199,15 @@ export const FEATURES = defineFeatures({
     deployments: everywhere,
     default: false,
   },
+  workbotProactive: {
+    label: "Workbot: proactive heads-ups",
+    description: "Workbot checks members' Google Calendar on its own and sends one short Slack message before a meeting that needs prep or when a meeting today or tomorrow changes, and stays quiet otherwise. Admins set it up in Manage › Workbot; members mute, snooze or turn it off from Slack. Needs Workbot and the Slack assistant.",
+    since: "2026-10",
+    author: "benjaminshafii",
+    docs: "docs/features/workbot-proactive/README.md",
+    deployments: everywhere,
+    default: false,
+  },
   workbotIncludedModels: {
     label: "Workbot: included OpenWork models by default",
     description: "Signed-in members chat in Workbot on their included OpenWork models without an AI Gateway provider. When the free allowance runs out, Workbot says when it resets and links admins to OpenWork Models or the workspace's model settings.",

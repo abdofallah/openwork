@@ -211,6 +211,16 @@
               ],
               "description": "Workbot: workspace assistant: Members ask Workbot about the document or calendar view they have open, chat without leaving their work, and navigate from a compact sidebar. Workbot offers to open the documents it mentions, and the conversation stays open beside the document. Renders DEN_FEATURE_WORKBOT_WORKSPACE_ASSISTANT."
             },
+            "workbotProactive": {
+              "enum": [
+                "",
+                "true",
+                "false",
+                true,
+                false
+              ],
+              "description": "Workbot: proactive heads-ups: Workbot checks members' Google Calendar on its own and sends one short Slack message before a meeting that needs prep or when a meeting today or tomorrow changes, and stays quiet otherwise. Admins set it up in Manage › Workbot; members mute, snooze or turn it off from Slack. Needs Workbot and the Slack assistant. Renders DEN_FEATURE_WORKBOT_PROACTIVE."
+            },
             "workbotIncludedModels": {
               "enum": [
                 "",
