@@ -38,6 +38,8 @@ import { listHeadlessModels, slackRunnerAvailable } from "./headless.js"
 import { organizationDefaultModel } from "../workbot/model.js"
 import { publicRequestUrl } from "../request-url.js"
 import { openworkYourConnectionsUrl } from "../mcp/connection-navigation.js"
+import { defaultProactiveInteractionDeps, handleProactiveInteraction } from "../workbot-proactive/interactions.js"
+import { publishSlackHome } from "./home.js"
 import {
   BOT_SCOPES,
   REQUIRED_BOT_SCOPES,
@@ -500,7 +502,7 @@ export function registerSlackAssistantRoutes<T extends { Variables: OrgRouteVari
         description:
           action === "commands"
             ? "Verify the signed Slack slash command and return an ephemeral link for the member to connect their own account in OpenWork."
-            : "Verify the signed Slack interaction and record supported feedback only for the member who owns the referenced assistant event.",
+            : "Verify the signed Slack interaction and record supported feedback only for the member who owns the referenced assistant event. Heads-ups buttons (mute, snooze, turn off and their undo) record the choice for the Slack user who pressed them, resolved from the signed payload.",
         security: [],
         responses: {
           ...webhookResponses,
@@ -556,6 +558,13 @@ export function registerSlackAssistantRoutes<T extends { Variables: OrgRouteVari
             parsed.data.api_app_id !== installation.appId
           )
             return c.json({ ok: false }, 403)
+          try {
+            if (await handleProactiveInteraction(installation, payload, defaultProactiveInteractionDeps(publishSlackHome)))
+              return c.json({ ok: true })
+          } catch {
+            appLogger.warn("workbot_proactive_interaction_failed", { connection_id: installation.connectionId })
+            return c.json({ ok: true })
+          }
           for (const item of parsed.data.actions ?? [])
             if (
               item.action_id.startsWith("slack_feedback:") &&

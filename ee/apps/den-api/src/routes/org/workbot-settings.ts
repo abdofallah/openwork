@@ -1,8 +1,19 @@
 import { readWorkbotModel, withWorkbotModel, isWorkbotManagedLuna, workbotModelTestSchema, workbotSettingsInputSchema, workbotSettingsSchema } from "@openwork/types/den/workbot-settings"
+import {
+  mergeWorkbotProactiveSettings,
+  readWorkbotProactiveSettings,
+  withWorkbotProactiveSettings,
+  workbotProactiveSettingsInputSchema,
+  workbotProactiveViewSchema,
+  type WorkbotProactiveSettings,
+} from "@openwork/types/den/workbot-proactive"
 import type { Hono } from "hono"
 import { describeRoute } from "hono-openapi"
 import { z } from "zod"
+import { requireFeature } from "../../features.js"
 import { jsonValidator, orgMemberRoute, requireOrgPermission, userSessionRoute } from "../../middleware/index.js"
+import { proactiveRunnerReady, proactiveSlackReady, readProactiveSettings } from "../../workbot-proactive/access.js"
+import { workbotOrigin } from "../../workbot/config.js"
 import { checkRateLimit } from "../../utils/rate-limit.js"
 import { testOrganizationWorkbotModel } from "../../workbot/model-test.js"
 import { forbiddenSchema, invalidRequestSchema, jsonResponse, unauthorizedSchema } from "../../openapi.js"
@@ -33,11 +44,85 @@ const requireWorkbotSettingsRead: ReturnType<typeof requireOrgPermission> = asyn
   return requireOrgPermission("inference.view")(c, next)
 }
 
+/** Heads-ups need Workbot on this deployment, the same capability that gates Workbot itself. */
+const requireWorkbotDeployed: ReturnType<typeof requireOrgPermission> = async (c, next) => {
+  if (workbotOrigin() === null) return c.json({ error: "feature_disabled" as const, feature: "workbot" }, 404)
+  return next()
+}
+
+const workbotProactiveViewDocumentSchema = workbotProactiveViewSchema.meta({ ref: "WorkbotProactiveSettings" })
+const workbotProactiveInputDocumentSchema = workbotProactiveSettingsInputSchema.meta({ ref: "WorkbotProactiveSettingsInput" })
+const invalidHoursSchema = z.object({ error: z.literal("invalid_working_hours"), message: z.string() }).meta({ ref: "WorkbotProactiveInvalidHoursError" })
+export const INVALID_WORKING_HOURS_MESSAGE = "The workday must end after it starts."
+
+async function proactiveView(organizationId: Parameters<typeof proactiveSlackReady>[0], settings: WorkbotProactiveSettings) {
+  return { settings, slackReady: await proactiveSlackReady(organizationId), runnerReady: proactiveRunnerReady() }
+}
+
 /**
  * Manage › Workbot: the organization's default model for its cloud agents (Workbot, the Slack assistant, and cloud
  * Automations set to the cloud default). Admins choose it from their AI Gateway models.
  */
 export function registerOrgWorkbotSettingsRoutes<T extends { Variables: OrgRouteVariables }>(app: Hono<T>) {
+  app.get(
+    "/v1/org/workbot-settings/proactive",
+    describeRoute({
+      tags: ["Organizations"],
+      summary: "Get Workbot's proactive heads-up settings",
+      description:
+        "Returns the organization's Proactive settings for Workbot (Manage › Workbot): whether heads-ups are on, which calendar heads-ups are enabled, working hours, the daily limit per member and whether members start opted in. Also says whether the Slack assistant is ready to deliver them and whether the headless runner meeting prep needs is configured. Requires the workbotProactive feature, Workbot on this deployment, and View OpenWork Models settings or Manage OpenWork Models.",
+      responses: {
+        200: jsonResponse("Proactive settings returned.", workbotProactiveViewDocumentSchema),
+        401: jsonResponse("Authentication required.", unauthorizedSchema),
+        403: jsonResponse("The caller lacks both View OpenWork Models settings and Manage OpenWork Models.", forbiddenSchema),
+        404: notFound,
+      },
+    }),
+    orgMemberRoute(),
+    requireFeature("workbotProactive"),
+    requireWorkbotDeployed,
+    requireWorkbotSettingsRead,
+    async (c) => {
+      c.header("Cache-Control", "no-store")
+      const organizationId = c.get("organizationContext").organization.id
+      return c.json(await proactiveView(organizationId, await readProactiveSettings(organizationId)))
+    },
+  )
+
+  app.put(
+    "/v1/org/workbot-settings/proactive",
+    describeRoute({
+      tags: ["Organizations"],
+      summary: "Change Workbot's proactive heads-up settings",
+      description:
+        "Changes any subset of the organization's Proactive settings for Workbot. The next check uses them; members' own choices (muted, snoozed, turned off) are kept. Heads-ups only read members' calendars and email and never act for them. Requires the workbotProactive feature, Workbot on this deployment and Manage OpenWork Models.",
+      responses: {
+        200: jsonResponse("Proactive settings saved.", workbotProactiveViewDocumentSchema),
+        400: jsonResponse("The request was invalid, or the workday would end before it starts.", z.union([invalidHoursSchema, invalidRequestSchema])),
+        401: jsonResponse("Authentication required.", unauthorizedSchema),
+        403: jsonResponse("The caller lacks the Manage OpenWork Models permission.", forbiddenSchema),
+        404: notFound,
+      },
+    }),
+    orgMemberRoute(),
+    requireFeature("workbotProactive"),
+    requireWorkbotDeployed,
+    requireOrgPermission("inference.manage"),
+    jsonValidator(workbotProactiveInputDocumentSchema),
+    async (c) => {
+      c.header("Cache-Control", "no-store")
+      const organizationId = c.get("organizationContext").organization.id
+      const change = c.req.valid("json")
+      const result: { settings: WorkbotProactiveSettings | null } = { settings: null }
+      await updateOrganizationMetadata(organizationId, (current) => {
+        result.settings = mergeWorkbotProactiveSettings(readWorkbotProactiveSettings(current), change)
+        return result.settings ? withWorkbotProactiveSettings(current, result.settings) : current
+      })
+      if (!result.settings) return c.json({ error: "invalid_working_hours" as const, message: INVALID_WORKING_HOURS_MESSAGE }, 400)
+      return c.json(await proactiveView(organizationId, result.settings))
+    },
+  )
+
   app.post(
     "/v1/org/workbot-settings/test-default-model",
     describeRoute({

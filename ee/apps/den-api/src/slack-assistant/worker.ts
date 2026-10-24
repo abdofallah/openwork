@@ -10,6 +10,7 @@ import {
 import { z } from "zod"
 import { appLogger } from "../observability/logger.js"
 import { openworkYourConnectionsUrl } from "../mcp/connection-navigation.js"
+import { publishSlackHome } from "./home.js"
 import {
   buildSlackEnvelope,
   buildSlackPrompt,
@@ -175,33 +176,7 @@ export async function processSlackEvent(event: EventRow, suppliedDeps: WorkerDep
     return checkpointEvent(event, { status: "done" })
   }
   if (payload.type === "app_home_opened") {
-    if (payload.user && payload.tab === "home")
-      await slack("views.publish", {
-        user_id: payload.user,
-        view: {
-          type: "home",
-          blocks: [
-            {
-              type: "section",
-              text: {
-                type: "mrkdwn",
-                text: "Your own OpenWork assistant. Connect your Slack account, then mention @openwork or send a message here.",
-              },
-            },
-            {
-              type: "actions",
-              elements: [
-                {
-                  type: "button",
-                  action_id: "connect_openwork",
-                  text: { type: "plain_text", text: "Connect OpenWork" },
-                  url: openworkYourConnectionsUrl(event.connectionId),
-                },
-              ],
-            },
-          ],
-        },
-      })
+    if (payload.user && payload.tab === "home") await publishSlackHome(slack, installation, payload.user)
     if (payload.channel && payload.tab === "messages")
       await slack("assistant.threads.setSuggestedPrompts", {
         channel_id: payload.channel,

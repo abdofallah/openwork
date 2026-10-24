@@ -5,6 +5,7 @@ import { markDraining } from "./drain-state.js"
 import app from "./app.js"
 import { startSlackAssistantWorker } from "./slack-assistant/worker.js"
 import { startSlackDesktopHandoffWorker } from "./slack-assistant/desktop-handoff.js"
+import { startWorkbotProactiveWorker } from "./workbot-proactive/worker.js"
 import { env } from "./env.js"
 import { appLogger } from "./observability/logger.js"
 import { shutdownObservability } from "./observability/runtime.js"
@@ -21,6 +22,7 @@ import { markServerListening } from "./server-start.js"
 
 const stopSlackAssistantWorker = startSlackAssistantWorker()
 const stopSlackDesktopHandoffWorker = startSlackDesktopHandoffWorker()
+const stopWorkbotProactiveWorker = startWorkbotProactiveWorker()
 const stopScimMaintenanceLoop = startScimMaintenanceLoop()
 const stopBillingInvitationExpiryLoop = startBillingInvitationExpiryLoop()
 const stopLifecycleEmailLoop = startLifecycleEmailLoop()
@@ -53,6 +55,7 @@ async function stopBackgroundLoops() {
     stopLifecycleEmailLoop(),
     stopSlackAssistantWorker(),
     stopSlackDesktopHandoffWorker(),
+    stopWorkbotProactiveWorker(),
     stopCloudIdleStopLoop(),
     stopWorkerProvisioningReconcileLoop(),
     stopGithubSyncWorker(),

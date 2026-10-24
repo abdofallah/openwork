@@ -445,6 +445,36 @@ async function googleWorkspaceToken(input: {
   return { kind: "ok", accessToken: token.accessToken, account: token.account, enabledScopes, enabledFeatures, connectionId: credentialProviderId }
 }
 
+export type MemberCalendarRead =
+  | { kind: "ok"; json: unknown }
+  | { kind: "needs_connection" | "policy_blocked" | "missing_scope" | "google_api_error" }
+
+/**
+ * Reads a member's primary Google Calendar for a background check (Workbot's proactive heads-ups), outside any
+ * request: one read-only `GET`, expanded recurring events and cancelled ones (`showDeleted`), so a check can tell a
+ * cancellation from a move. Uses the member's default Google Workspace connection, like the calendar list route.
+ */
+export async function readMemberGoogleCalendar(input: {
+  organizationId: DenTypeId<"organization">
+  orgMembershipId: DenTypeId<"member">
+  timeMin: string
+  timeMax: string
+}): Promise<MemberCalendarRead> {
+  const token = await googleWorkspaceToken({ organizationId: input.organizationId, orgMembershipId: input.orgMembershipId, connectionId: null })
+  if (token.kind !== "ok") return { kind: token.kind }
+  if (missingScope(token.account, [CALENDAR_READ_SCOPE, CALENDAR_EVENTS_SCOPE])) return { kind: "missing_scope" }
+  const url = new URL(`${calendarApiBase()}/calendar/v3/calendars/primary/events`)
+  url.searchParams.set("timeMin", input.timeMin)
+  url.searchParams.set("timeMax", input.timeMax)
+  url.searchParams.set("singleEvents", "true")
+  url.searchParams.set("showDeleted", "true")
+  url.searchParams.set("orderBy", "startTime")
+  url.searchParams.set("maxResults", "250")
+  const response = await googleWorkspaceApiFetch(url, { headers: { authorization: `Bearer ${token.accessToken}` } })
+  if (!response.ok) return { kind: "google_api_error" }
+  return { kind: "ok", json: await readJson(response) }
+}
+
 async function googleApiError(operation: string, response: Response) {
   const text = await response.text()
   return { error: "google_api_error" as const, message: `${operation} failed: ${response.status} ${text.slice(0, 300)}` }
