@@ -24,10 +24,13 @@ export async function readProactiveMember(memberId: DenTypeId<"member">): Promis
   return (await db.select().from(Member).where(eq(Member.memberId, memberId)).limit(1))[0] ?? null
 }
 
-/** Starts checking these members (new rows are due now); existing rows are left alone. */
-export async function ensureProactiveMembers(organizationId: DenTypeId<"organization">, memberIds: readonly DenTypeId<"member">[]) {
+/**
+ * Starts checking these members (new rows are due now); existing rows are left alone. Times are always written from
+ * here, never left to the database's `now()`, so the cap and leases never depend on the server's time zone.
+ */
+export async function ensureProactiveMembers(organizationId: DenTypeId<"organization">, memberIds: readonly DenTypeId<"member">[], now = new Date()) {
   if (!memberIds.length) return
-  await db.insert(Member).ignore().values(memberIds.map((memberId) => ({ memberId, organizationId })))
+  await db.insert(Member).ignore().values(memberIds.map((memberId) => ({ memberId, organizationId, nextCheckAt: now, createdAt: now, updatedAt: now })))
 }
 
 /** Saves a member's own choice. Turning on or resuming makes them due now, so the next tick checks at once. */
@@ -47,7 +50,7 @@ export async function saveProactivePreferences(
   }
   await db
     .insert(Member)
-    .values({ memberId, organizationId, ...set })
+    .values({ memberId, organizationId, nextCheckAt: now, createdAt: now, ...set })
     .onDuplicateKeyUpdate({ set })
 }
 
@@ -116,6 +119,7 @@ export async function reserveProactiveNotification(input: {
   kind: ProactiveKind
   key: string
   outcome?: NotificationOutcome
+  now?: Date
 }) {
   const id = notificationId(input.memberId, input.kind, input.key)
   const result = await db.insert(Notification).ignore().values({
@@ -124,6 +128,7 @@ export async function reserveProactiveNotification(input: {
     memberId: input.memberId,
     kind: input.kind,
     outcome: input.outcome ?? "pending",
+    createdAt: input.now ?? new Date(),
   })
   return automationAffectedRows(result) > 0 ? id : null
 }
