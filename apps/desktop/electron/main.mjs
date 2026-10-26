@@ -159,8 +159,20 @@ const DESKTOP_DISTRIBUTION = resolveDesktopDistribution({
   packageFlavor: Reflect.get(desktopPackageMetadata, "openworkDistribution"),
   environmentFlavor: process.env.OPENWORK_DESKTOP_DISTRIBUTION,
 });
-const TAURI_APP_IDENTIFIER = DESKTOP_DISTRIBUTION.appIdentifier;
-const DEV_APP_IDENTIFIER = `${DESKTOP_DISTRIBUTION.appIdentifier}.dev`;
+// A packaged build can opt into its own on-disk identity by declaring
+// `openworkAppIdentifier` in its package metadata (electron-builder
+// `extraMetadata`). Side-by-side/test builds use this so they keep a separate
+// user-data folder and can run next to an existing install without touching its
+// state. Unset for every shipped flavor, so behavior is unchanged there.
+const PACKAGED_APP_IDENTIFIER_OVERRIDE = Reflect.get(desktopPackageMetadata, "openworkAppIdentifier");
+const TAURI_APP_IDENTIFIER =
+  app.isPackaged && typeof PACKAGED_APP_IDENTIFIER_OVERRIDE === "string" && PACKAGED_APP_IDENTIFIER_OVERRIDE.trim()
+    ? PACKAGED_APP_IDENTIFIER_OVERRIDE.trim()
+    : DESKTOP_DISTRIBUTION.appIdentifier;
+// Side-by-side builds must not steal the `openwork://` handler from the app
+// that is already installed, or deep links/OAuth hand-off would silently move.
+const SIDE_BY_SIDE_BUILD = app.isPackaged && TAURI_APP_IDENTIFIER !== DESKTOP_DISTRIBUTION.appIdentifier;
+const DEV_APP_IDENTIFIER = `${TAURI_APP_IDENTIFIER}.dev`;
 const DESKTOP_PROTOCOL_SCHEME = DESKTOP_DISTRIBUTION.protocolScheme;
 const DEFAULT_APP_NAME =
   (!app.isPackaged ? process.env.OPENWORK_ELECTRON_APP_NAME?.trim() : "") ||
@@ -356,6 +368,7 @@ if (BLANK_SLATE_LAUNCH.homePath) app.setPath("home", BLANK_SLATE_LAUNCH.homePath
 if (
   app.isPackaged
   && !BLANK_SLATE_LAUNCH.enabled
+  && !SIDE_BY_SIDE_BUILD
   && process.env.OPENWORK_ELECTRON_DISABLE_PROTOCOL_REGISTRATION !== "1"
   && !(process.platform === "linux" && process.env.APPIMAGE)
 ) {

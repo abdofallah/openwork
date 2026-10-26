@@ -5,6 +5,7 @@ apps/desktop/electron/generated/
 apps/desktop/.electron-runtime/
 apps/desktop/dist-electron-demo-a/
 apps/desktop/dist-electron-demo-b/
+apps/desktop/dist-electron-sidebyside/
 packages/*/node_modules/
 apps/*/node_modules/
 ee/apps/*/node_modules/

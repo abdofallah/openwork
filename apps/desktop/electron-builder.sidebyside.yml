@@ -1,0 +1,37 @@
+# Side-by-side local test build.
+#
+# Produces a second, independently installable OpenWork under its own identity
+# so it can be installed and tested next to an existing OpenWork install without
+# replacing it or sharing its on-disk state:
+#
+#   * distinct appId  -> separate NSIS uninstall entry / registry identity
+#   * distinct productName -> separate install directory, Start Menu and desktop
+#     shortcuts, and Add/Remove Programs entry
+#   * extraMetadata.openworkAppIdentifier -> separate Electron user-data folder
+#     (%APPDATA%\com.differentai.openwork.sxs) and taskbar identity, so the two
+#     apps never read or write each other's config, sessions, or auth (see
+#     electron/main.mjs)
+#   * protocols: [] -> never takes over the openwork:// deep-link handler from
+#     the real app
+#
+# Build it with (from apps/desktop):
+#   pnpm exec electron-builder --config electron-builder.sidebyside.yml --publish never
+#
+# The output installer lands in dist-electron-sidebyside/.
+extends: ./electron-builder.yml
+appId: com.differentai.openwork.sxs
+productName: OpenWork Side-by-Side
+protocols: []
+extraMetadata:
+  openworkAppIdentifier: com.differentai.openwork.sxs
+directories:
+  output: dist-electron-sidebyside
+artifactName: openwork-sidebyside-${os}-${arch}-${version}.${ext}
+nsis:
+  include: build/installer.sidebyside.nsh
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: OpenWork Side-by-Side
