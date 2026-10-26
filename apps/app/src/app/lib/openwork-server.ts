@@ -231,6 +231,40 @@ function parseWorkspaceDefaultModelState(value: unknown): WorkspaceDefaultModelS
   return parsed.data;
 }
 
+/** One memory file of a workspace, as the server's memory scan reports it. */
+export type OpenworkWorkspaceMemoryFile = {
+  filename: string;
+  name: string;
+  description: string;
+  type: string;
+  mtimeMs: number;
+  byteSize: number;
+  /** Token estimate for the whole file, characters / 4. */
+  tokens: number;
+};
+
+/**
+ * The Claude Code compatible memory the engine has for a workspace, as the
+ * composer's memory popup shows it. `instructionsTokens` is 0 when nothing is
+ * injected, so the popup and the context breakdown agree on what is in context.
+ */
+export type OpenworkWorkspaceMemory = {
+  memoryDir: string;
+  projectDir: string;
+  entrypoint: {
+    name: string;
+    present: boolean;
+    /** True when the index made it into the injected text. */
+    loaded: boolean;
+    lineCount: number;
+    byteCount: number;
+    truncated: boolean;
+  };
+  files: OpenworkWorkspaceMemoryFile[];
+  instructionsTokens: number;
+  entrypointTokens: number;
+};
+
 function parseEngineV2PreviewStatus(value: unknown): EngineV2PreviewStatus {
   if (
     !value || typeof value !== "object" ||
@@ -1915,6 +1949,13 @@ export function createOpenworkServerClient(options: { baseUrl: string; token?: s
       requestJson<{ opencode: Record<string, unknown>; openwork: Record<string, unknown>; updatedAt?: number | null }>(
         baseUrl,
         `/workspace/${workspaceId}/config`,
+        { token, hostToken, timeoutMs: timeouts.config },
+      ),
+    /** The workspace's Claude Code compatible memory: index, topic files and token cost. */
+    getWorkspaceMemory: (workspaceId: string) =>
+      requestJson<OpenworkWorkspaceMemory>(
+        baseUrl,
+        `/workspace/${encodeURIComponent(workspaceId)}/memory`,
         { token, hostToken, timeoutMs: timeouts.config },
       ),
     getWorkspaceRunMode: (workspaceId: string) =>

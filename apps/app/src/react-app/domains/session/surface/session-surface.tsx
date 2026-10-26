@@ -60,6 +60,8 @@ import { useComposerContextIndicatorsFeature } from "./composer/use-composer-con
 import { useSessionContextUsage } from "./composer/use-session-context-usage";
 import { loadContextBreakdown } from "./composer/context-breakdown-source";
 import type { ContextBreakdownSource } from "./composer/context-usage-control";
+import { memoryContextTokens } from "./composer/composer-memory";
+import type { ComposerMemorySource } from "./composer/composer-memory-control";
 import { sessionComposerDiagnosticReasons } from "./composer/composer-diagnostics";
 import { WorkspaceRunModeMenu } from "./composer/workspace-run-mode-menu";
 import { useSessionModelSelection } from "./session-model-store";
@@ -3023,13 +3025,26 @@ export function SessionSurface(props: SessionSurfaceProps) {
       listContext: async () => isOpencodeV2Client(opencodeClient)
         ? unwrap(await opencodeClient.session.context({ sessionID: props.sessionId }))
         : null,
+      // The engine injects the memory segment untagged, so the app has to ask the
+      // server how many tokens it costs; otherwise they hide inside "system and other".
+      memoryTokens: async () => memoryContextTokens(await props.client.getWorkspaceMemory(props.workspaceId)),
       connectedMcpServers,
     } as const;
     return {
       queryKey: ["session-context-breakdown", props.workspaceId, props.sessionId, engine, providerID, modelID, contextUsage.used, contextUsage.window, contextUsage.ceiling, connectedMcpServers],
       load: () => loadContextBreakdown(deps, contextUsage),
     };
-  }, [contextUsage, listSkills, opencodeClient, props.opencodeBaseUrl, props.sessionId, props.workspaceId, sessionModel.selectedModel, toolMcpStatuses]);
+  }, [contextUsage, listSkills, opencodeClient, props.client, props.opencodeBaseUrl, props.sessionId, props.workspaceId, sessionModel.selectedModel, toolMcpStatuses]);
+
+  // The memory popup lists the workspace's memory files. Memory is workspace-scoped,
+  // so one query serves the session; it hides itself when the workspace has none.
+  const memorySource = useMemo<ComposerMemorySource | undefined>(() => {
+    if (!contextIndicatorsEnabled) return undefined;
+    return {
+      queryKey: ["workspace-memory", props.workspaceId],
+      load: () => props.client.getWorkspaceMemory(props.workspaceId),
+    };
+  }, [contextIndicatorsEnabled, props.client, props.workspaceId]);
 
   const listImportedPlugins = useCallback(async (): Promise<CloudImportedPlugin[]> => {
     const pushId = ++pluginConnectPushRef.current;
@@ -3739,6 +3754,7 @@ export function SessionSurface(props: SessionSurfaceProps) {
         listMcp={listMcp}
         contextUsage={contextUsage}
         contextBreakdown={contextBreakdown}
+        memory={memorySource}
         mcpServers={toolMcpServers}
         mcpStatus={toolMcpStatus}
         mcpStatuses={toolMcpStatuses}

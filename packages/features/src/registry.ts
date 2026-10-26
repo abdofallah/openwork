@@ -370,6 +370,8 @@ export const FEATURES = defineFeatures({
     label: "Desktop: context and connectors in the chat box",
     description: "Next to the model picker, people see how full the model's context is, with a breakdown of what fills it, and which connectors are connected.",
     since: "2026-10",
+    author: "mfroehlich",
+    docs: "docs/features/composer-context-indicators/README.md",
     deployments: everywhere,
     default: false,
   },

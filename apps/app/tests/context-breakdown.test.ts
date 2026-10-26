@@ -129,7 +129,7 @@ describe("estimateSkillRegistryTokens and estimateToolDefinitionTokens", () => {
 
 describe("buildContextBreakdown", () => {
   const estimates = (extra: Partial<BreakdownEstimates> = {}): BreakdownEstimates => ({
-    messages: 1_000, activeSkills: 0, skillRegistry: 300, tools: 5_000, toolsRow: "tools", toolsPartial: false, ...extra,
+    messages: 1_000, activeSkills: 0, skillRegistry: 300, memory: 0, tools: 5_000, toolsRow: "tools", toolsPartial: false, ...extra,
   });
 
   test("the rows add up to the measured total, the remainder is system and other", () => {
@@ -146,6 +146,22 @@ describe("buildContextBreakdown", () => {
     expect(occupied).toBe(10_000);
     expect(breakdown.rows.reduce((sum, row) => sum + row.tokens, 0)).toBe(100_000);
     expect(breakdown.scaled).toBe(false);
+  });
+
+  test("gives the injected memory its own row instead of leaving it in system and other", () => {
+    const breakdown = buildContextBreakdown({
+      used: 10_000, window: 100_000, ceiling: 92_000, estimates: estimates({ memory: 1_200 }),
+    });
+    expect(breakdown.rows.map((row) => [row.id, row.tokens])).toEqual([
+      ["messages", 1_000],
+      ["skills", 300],
+      ["memory", 1_200],
+      ["tools", 5_000],
+      ["system", 2_500],
+      ["buffer", 8_000],
+      ["free", 82_000],
+    ]);
+    expect(breakdown.rows.reduce((sum, row) => sum + row.tokens, 0)).toBe(100_000);
   });
 
   test("marks what is derived from the window as not estimated", () => {

@@ -26,6 +26,7 @@ import {
   openworkAnthropicAdaptiveThinkingPluginPath,
   openworkAnthropicToolSchemaPluginPath,
   openworkTitleRecoveryPluginPath,
+  openworkMemoryPluginPath,
   openworkGatewayQuotaPluginPath,
   openworkOfficeAttachmentsPluginPath,
   openworkSpreadsheetsPluginPath,
@@ -117,6 +118,10 @@ export function buildOpenworkRuntimeConfigObjectFromSnapshot(
       openworkAnthropicAdaptiveThinkingPluginPath(),
       openworkAnthropicToolSchemaPluginPath(),
       openworkTitleRecoveryPluginPath(),
+      // Claude Code compatible memory: read the workspace's memory directory and
+      // append its index to the system prompt. Registered after the capability
+      // plugins so its section is the last thing the model reads.
+      openworkMemoryPluginPath(),
       openworkGatewayQuotaPluginPath(),
       ...runtimePluginList(runtimeConfig).filter((plugin) => !isManagedPolicyPlugin(plugin)),
     ],

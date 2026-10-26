@@ -41,6 +41,8 @@ export const openworkOfficeAttachmentsPluginPath = () => openworkPluginPath("ope
 export const openworkSpreadsheetsPluginPath = () => openworkPluginPath("openwork-spreadsheets");
 export const openworkPdfAttachmentsPluginPath = () => openworkPluginPath("openwork-pdf-attachments");
 export const openworkTitleRecoveryPluginPath = () => openworkPluginPath("openwork-title-recovery");
+export const openworkMemoryPluginPath = () => openworkPluginPath("openwork-memory");
+export const openworkMemoryV2PluginPath = () => openworkPluginPath("openwork-memory-v2");
 export const openworkGatewayQuotaPluginPath = () => openworkPluginPath("openwork-gateway-quota");
 export const openworkGatewayQuotaV2PluginPath = () => openworkPluginPath("openwork-gateway-quota-v2");
 export const openworkProviderSyncV2PluginPath = () => {

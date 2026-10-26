@@ -43,6 +43,7 @@ import {
   mergeComposerConnectionInventory,
 } from "./composer-connections";
 import { ComposerConnectorsControl } from "./composer-connectors-control";
+import { ComposerMemoryControl, type ComposerMemorySource } from "./composer-memory-control";
 import { ContextUsageControl, type ContextBreakdownSource } from "./context-usage-control";
 import type { ContextUsage } from "./context-usage";
 import { useComposerContextIndicatorsFeature } from "./use-composer-context-indicators-feature";
@@ -156,6 +157,8 @@ type ComposerProps = {
   contextUsage?: ContextUsage | null;
   /** Loads the breakdown shown when the context indicator opens. */
   contextBreakdown?: ContextBreakdownSource;
+  /** Loads the workspace memory shown beside the context indicator. */
+  memory?: ComposerMemorySource;
 };
 
 const FLUSH_PROMPT_EVENT = "openwork:flushPromptDraft";
@@ -688,6 +691,9 @@ export const ReactSessionComposer = memo(function ReactSessionComposer(props: Co
   // for the plus menu. The new-task screen reads no runtime status for local
   // servers, so a count there would be too low: it stays without the indicator.
   const showConnectorsIndicator = useComposerContextIndicatorsFeature() && !props.flush;
+  // Memory is a passive read with no runtime status to wait for, so unlike the
+  // connectors indicator it also appears on the new-task screen.
+  const showMemoryIndicator = useComposerContextIndicatorsFeature();
   const refreshConnectors = useCallback(() => {
     void listMcpRef.current?.({ passive: true }).catch(() => undefined);
     void orgMcp.refresh();
@@ -1671,6 +1677,7 @@ export const ReactSessionComposer = memo(function ReactSessionComposer(props: Co
                   />
                 ) : null}
                 {props.contextUsage ? <ContextUsageControl usage={props.contextUsage} breakdown={props.contextBreakdown} /> : null}
+                {showMemoryIndicator && props.memory ? <ComposerMemoryControl source={props.memory} /> : null}
                 {props.contextControl}
                 </div>
 

@@ -13,6 +13,7 @@ const deps = (extra: Partial<BreakdownSourceDeps> = {}): BreakdownSourceDeps => 
   listSkills: async () => skills,
   listTools: async () => tools,
   listContext: async () => null,
+  memoryTokens: async () => null,
   connectedMcpServers: 0,
   ...extra,
 });
@@ -47,6 +48,23 @@ describe("loadBreakdownEstimates on v1", () => {
     let read = false;
     await loadBreakdownEstimates(deps({ listContext: async () => { read = true; return []; } }));
     expect(read).toBe(false);
+  });
+
+  test("counts the injected memory the server reports", async () => {
+    const estimates = await loadBreakdownEstimates(deps({ memoryTokens: async () => 1_200 }));
+    expect(estimates.memory).toBe(1_200);
+  });
+
+  test("a failing memory read leaves it to the remainder", async () => {
+    const estimates = await loadBreakdownEstimates(deps({ memoryTokens: async () => { throw new Error("offline"); } }));
+    expect(estimates.memory).toBe(0);
+  });
+
+  test("adds a Memory row only when memory costs something", async () => {
+    const withMemory = await loadContextBreakdown(deps({ memoryTokens: async () => 1_200 }), usage);
+    expect(withMemory.rows.map((row) => row.id)).toEqual(["messages", "skills", "memory", "tools", "system", "buffer", "free"]);
+    const withoutMemory = await loadContextBreakdown(deps(), usage);
+    expect(withoutMemory.rows.map((row) => row.id)).not.toContain("memory");
   });
 });
 

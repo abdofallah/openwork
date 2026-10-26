@@ -20,6 +20,12 @@ export type BreakdownSourceDeps = {
   listTools: () => Promise<readonly { id: string; description?: string; parameters?: unknown }[] | null>;
   /** v2: the messages the engine will send next. Null when it cannot say. */
   listContext: () => Promise<readonly unknown[] | null>;
+  /**
+   * Tokens of the memory segment the engine injects for this workspace, from the
+   * server that builds it. Null when it cannot say, so the memory share stays in
+   * "system and other" instead of being guessed.
+   */
+  memoryTokens: () => Promise<number | null>;
   /** Connected MCP servers: on v1 their tools are not in the tool list, so the Tools row is partial. */
   connectedMcpServers: number;
 };
@@ -39,10 +45,11 @@ const settled = async <T>(load: () => Promise<T>): Promise<T | null> => {
  */
 export async function loadBreakdownEstimates(deps: BreakdownSourceDeps): Promise<BreakdownEstimates> {
   const v2 = deps.engine === "v2";
-  const [skills, tools, context] = await Promise.all([
+  const [skills, tools, context, memoryTokens] = await Promise.all([
     settled(deps.listSkills),
     v2 ? Promise.resolve(null) : settled(deps.listTools),
     v2 ? settled(deps.listContext) : Promise.resolve(null),
+    settled(deps.memoryTokens),
   ]);
   const skillRegistry = skills ? estimateSkillRegistryTokens(skills) : 0;
 
@@ -56,6 +63,7 @@ export async function loadBreakdownEstimates(deps: BreakdownSourceDeps): Promise
       messages: transcript.messages,
       activeSkills: transcript.activeSkills,
       skillRegistry,
+      memory: memoryTokens ?? 0,
       tools: sizes?.catalog ?? 0,
       toolsRow: "mcpTools",
       toolsPartial: false,
@@ -67,6 +75,7 @@ export async function loadBreakdownEstimates(deps: BreakdownSourceDeps): Promise
     messages: transcript.messages,
     activeSkills: transcript.activeSkills,
     skillRegistry,
+    memory: memoryTokens ?? 0,
     tools: tools ? estimateToolDefinitionTokens(tools) : 0,
     toolsRow: "tools",
     toolsPartial: tools === null || deps.connectedMcpServers > 0,

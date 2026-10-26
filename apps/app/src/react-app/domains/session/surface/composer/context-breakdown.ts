@@ -18,7 +18,7 @@ const TOOL_DEFINITION_OVERHEAD_CHARS = 90;
 const SKILL_ENTRY_OVERHEAD_CHARS = 70;
 const MAX_DEPTH = 8;
 
-export type BreakdownRowId = "messages" | "activeSkills" | "skills" | "tools" | "mcpTools" | "system" | "buffer" | "free";
+export type BreakdownRowId = "messages" | "activeSkills" | "skills" | "memory" | "tools" | "mcpTools" | "system" | "buffer" | "free";
 
 export type BreakdownRow = {
   id: BreakdownRowId;
@@ -41,6 +41,11 @@ export type BreakdownEstimates = {
   messages: number;
   activeSkills: number;
   skillRegistry: number;
+  /**
+   * The memory segment the engine injects for this workspace, measured by the
+   * server that builds it. It would otherwise sit inside "system and other".
+   */
+  memory: number;
   tools: number;
   /** v1 lists the engine's tools ("Tools"); v2 cannot, so only the MCP catalog is known ("MCP tools"). */
   toolsRow: "tools" | "mcpTools";
@@ -235,6 +240,7 @@ export function buildContextBreakdown(input: {
     { id: "messages" as const, tokens: estimates.messages, partial: false },
     { id: "activeSkills" as const, tokens: estimates.activeSkills, partial: false },
     { id: "skills" as const, tokens: estimates.skillRegistry, partial: false },
+    { id: "memory" as const, tokens: estimates.memory, partial: false },
     { id: estimates.toolsRow, tokens: estimates.tools, partial: estimates.toolsPartial },
   ];
   const sum = known.reduce((total, row) => total + row.tokens, 0);
