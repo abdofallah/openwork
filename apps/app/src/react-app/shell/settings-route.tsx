@@ -101,6 +101,7 @@ import { AdvancedView } from "@/react-app/domains/settings/pages/advanced-view";
 import { ClaudeImportView } from "@/react-app/domains/settings/pages/claude-import-view";
 import { useDesktopFeature } from "@/react-app/domains/session/status/use-desktop-feature";
 import { AppearanceView } from "@/react-app/domains/settings/pages/appearance-view";
+import { FeaturesView } from "@/react-app/domains/settings/pages/features-view";
 import { KeyboardShortcutsView } from "@/react-app/domains/settings/pages/keyboard-shortcuts-view";
 import { CloudAccountView } from "@/react-app/domains/settings/pages/cloud-account-view";
 import {
@@ -303,6 +304,7 @@ export function parseSettingsPath(pathname: string): {
     case "permissions":
     case "appearance":
     case "shortcuts":
+    case "features":
     case "environment":
     case "updates":
     case "debug":
@@ -2530,6 +2532,8 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
             onOpenProviders={() => navigateSettingsPath("ai")}
           />
         );
+      case "features":
+        return <FeaturesView />;
       case "updates":
         return (
           <UpdatesView

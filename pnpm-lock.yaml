@@ -177,6 +177,9 @@ importers:
       '@openwork/calendar':
         specifier: workspace:*
         version: link:../../packages/calendar
+      '@openwork/features':
+        specifier: workspace:*
+        version: link:../../packages/features
       '@openwork/install-config':
         specifier: workspace:*
         version: link:../../packages/install-config

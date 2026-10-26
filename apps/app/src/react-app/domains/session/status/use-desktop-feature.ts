@@ -2,6 +2,7 @@ import { useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 
 import { createDenClient, readDenSettings } from "@/app/lib/den"
+import { useResolvedFeature } from "@/app/lib/use-local-feature"
 import { useDenAuth } from "@/react-app/domains/cloud/den-auth-provider"
 import { useOrgFeatureState } from "@/react-app/domains/cloud/use-org-feature"
 import { useAutomationsDenContext } from "@/react-app/domains/automations/use-automations"
@@ -14,6 +15,9 @@ type DesktopFeatureKey = "computerUse" | "browserFloatingView" | "remoteComputer
  * Reads one desktop feature from the registry. Signed in, it follows the
  * active organization through the shared org-feature hook; signed out, the
  * deployment switch (`GET /v1/features`). Unreachable or missing means off.
+ *
+ * A local choice from Settings > Features outranks the Den value, so an install
+ * without Den access can still turn a desktop capability on (and off).
  */
 export function useDesktopFeature(key: DesktopFeatureKey): boolean {
   const denAuth = useDenAuth()
@@ -32,5 +36,6 @@ export function useDesktopFeature(key: DesktopFeatureKey): boolean {
     retry: false,
     select: (features) => features[key] === true,
   })
-  return context.ready ? organization.enabled : denAuth.status === "signed_out" && !deployment.isError && deployment.data === true
+  const denValue = context.ready ? organization.enabled : denAuth.status === "signed_out" && !deployment.isError && deployment.data === true
+  return useResolvedFeature(key, denValue)
 }

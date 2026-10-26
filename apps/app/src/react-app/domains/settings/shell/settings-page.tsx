@@ -96,6 +96,8 @@ export function getSettingsTabIcon(tab: SettingsTab) {
       return Paintbrush;
     case "shortcuts":
       return Keyboard;
+    case "features":
+      return Sparkles;
     case "updates":
       return RefreshCcw;
     case "recovery":
@@ -141,6 +143,8 @@ export function getSettingsTabLabel(tab: SettingsTab) {
       return t("settings.tab_appearance");
     case "shortcuts":
       return "Keyboard shortcuts";
+    case "features":
+      return t("settings.tab_features");
     case "updates":
       return t("settings.tab_updates");
     case "recovery":
@@ -188,6 +192,8 @@ export function getSettingsTabDescription(tab: SettingsTab) {
       return t("settings.tab_description_appearance");
     case "shortcuts":
       return "Keys that switch to the models you use most";
+    case "features":
+      return t("settings.tab_description_features");
     case "updates":
       return t("settings.tab_description_updates");
     case "recovery":
@@ -212,7 +218,7 @@ export function getGlobalSettingsTabs(
   developerMode: boolean,
   capabilities: Pick<PlatformCapabilities, "autoUpdate">,
 ): SettingsTab[] {
-  const tabs: SettingsTab[] = ["ai", "ollama", "appearance", "shortcuts", "environment"];
+  const tabs: SettingsTab[] = ["ai", "ollama", "appearance", "shortcuts", "features", "environment"];
   if (capabilities.autoUpdate) tabs.push("updates");
   if (developerMode) tabs.push("debug");
   return tabs;

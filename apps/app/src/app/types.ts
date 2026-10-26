@@ -215,6 +215,7 @@ export const SETTINGS_TAB_VALUES = [
   "import",
   "appearance",
   "shortcuts",
+  "features",
   "updates",
   "recovery",
   "debug",
