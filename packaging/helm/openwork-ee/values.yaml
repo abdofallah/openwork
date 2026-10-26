@@ -61,6 +61,7 @@ config:
     selfServeEnterprise: ""            # default off (cloud only) · Owners can buy Enterprise by card at the planned per-person price.
     orgPrompts: ""                     # default off · Admins write a system prompt for everyone and for each team on the team's Prompts tab. Desktops add the prompts that apply to a member to every agent's instructions: Everyone's first, then each team's by team name. Turning this off stops desktops adding them at their next sync; saved prompts are kept.
     sessionTokenHashing: ""            # default off · Den keeps only a one-way hash of each sign-in session token, so a copy of the database cannot sign anyone in. New sessions are stored hashed and older ones convert the next time they are used; turn on only once every Den replica runs a release that reads both forms.
+    composerContextIndicators: ""      # default off · Next to the model picker, people see how full the model's context is, with a breakdown of what fills it, and which connectors are connected.
   # END GENERATED features
   administratorRecovery:
     # Processed only with config.features.administratorRecovery on. Flag off is a
